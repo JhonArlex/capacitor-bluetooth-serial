@@ -1,6 +1,8 @@
 # Capacitor Bluetooth Serial Plugin
 
-A client implementation for interacting with Bluetooth
+Forked from [capacitor-bluetooth-serial](https://github.com/agro1desenvolvimento/capacitor-bluetooth-serial) (archived)
+
+A client implementation for interacting with Bluetooth (serial), using Capacitor.
 
 Supported platforms
 
@@ -8,37 +10,20 @@ Supported platforms
 - [x] Android
 - [ ] iOS
 
+Supported Capacitor versions:
+- Capacitor <= 3: Please use [capacitor-bluetooth-serial](https://github.com/agro1desenvolvimento/capacitor-bluetooth-serial) (<= v0.0.3)
+- Capacitor 4 (v0.4.x)
+
 ## Usage
 
 Install the plugin via npm
 ```
-npm install --save capacitor-bluetooth-serial
+npm install --save @e-is/capacitor-bluetooth-serial
 ```
-
-In your capacitor project, make sure to register the Android plugin in
-in the projects `MainActivity` as follows
-
-```java
-import com.bluetoothserial.plugin.BluetoothSerial;
-
-public class MainActivity extends BridgeActivity {
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-
-    this.init(savedInstanceState, new ArrayList<Class<? extends Plugin>>() {{
-      add(BluetoothSerial.class);
-    }});
-  }
-}
-```
-
 
 
 ```typescript
-import {Plugins} from "@capacitor/core";
-
-const { BluetoothSerial } = Plugins;
+import {BluetoothSerial} from "@e-is/capacitor-bluetooth-serial";
 
 //...do something with plugin
 
@@ -54,6 +39,9 @@ Interface and type definitions can be found [here](./src/definitions.ts).
 
 - [BluetoothSerial.isEnabled](#isEnabled)
 - [BluetoothSerial.enable](#enable)
+- [BluetoothSerial.disable](#disable)
+- [BluetoothSerial.startEnabledNotifications](#startEnabledNotifications)
+- [BluetoothSerial.stopEnabledNotifications](#stopEnabledNotifications)
 - [BluetoothSerial.scan](#scan)
 - [BluetoothSerial.connect](#connect)
 - [BluetoothSerial.connectInsecure](#connectInsecure)
@@ -61,17 +49,15 @@ Interface and type definitions can be found [here](./src/definitions.ts).
 - [BluetoothSerial.isConnected](#isConnected)
 - [BluetoothSerial.read](#read)
 - [BluetoothSerial.readUntil](#readUntil)
-- [BluetoothSerial.enableNotifications](#enableNotifications)
-- [BluetoothSerial.disableNotifications](#disableNotifications)
-- [BluetoothSerial.enableRawNotifications](#enableRawNotifications)
-- [BluetoothSerial.disableRawNotifications](#disableRawNotifications)
+- [BluetoothSerial.startNotifications](#startNotifications)
+- [BluetoothSerial.stopNotifications](#stopNotifications)
 - [BluetoothSerial.write](#write)
 
 ## isEnabled
 
 Reports if bluetooth is enabled.
 
-  `isEnabled(): Promise<BluetoothEnabledResult>;`
+`isEnabled(): Promise<BluetoothState>;`
 
 ### Description
 
@@ -88,9 +74,9 @@ None.
 ```typescript
 BluetoothSerial
   .isEnabled()
-  .then((response: BluetoothEnabledResult) => {
-    const message = response.enabled ? 'enabled' : 'disabled';
-    console.log(`Bluetooth is ${message}`);
+  .then((response: BluetoothState) => {
+    const status = response.enabled ? 'enabled' : 'disabled';
+    console.log(`Bluetooth is ${status}`);
   })
   .catch(() => {
     console.log('Error checking bluetooth status');
@@ -99,9 +85,9 @@ BluetoothSerial
 
 ## enable
 
-  Enable bluetooth if it is not enabled. Also request permissions for bluetooth access if it is necessary.
+Enable bluetooth if it is not enabled. Also request permissions for bluetooth access if it is necessary.
 
-  `enable(): Promise<BluetoothEnabledResult>;`
+`enable(): Promise<BluetoothState>;`
 
 ### Description
 
@@ -118,20 +104,124 @@ None.
 ```typescript
 BluetoothSerial
   .enable()
-  .then((response: BluetoothEnabledResult) => {
-    const message = response.enabled ? 'enabled' : 'disabled';
-    console.log(`Bluetooth is ${message}`);
+  .then((response: BluetoothState) => {
+    const status = response.enabled ? 'enabled' : 'disabled';
+    console.log(`Bluetooth is ${status}`);
   })
   .catch(() => {
     console.log('Error enabling bluetooth');
   });
 ```
 
+
+## disable
+
+Disable bluetooth if enabled. Also request permissions for bluetooth access if it is necessary.
+
+`disable(): Promise<BluetoothState>;`
+
+### Description
+
+Function `disable` calls the success whatever bluetooth is successfully disabled or not.
+The promise will contain an attribute `enabled` indicating if bluetooth is enabled or *not* enabled after the process.
+The failure callback will be called only if an error occurs.
+
+If the app does not have permission to use bluetooth, it will request it.
+
+### Parameters
+
+None.
+
+### Quick Example
+
+```typescript
+BluetoothSerial
+  .disable()
+  .then((response: BluetoothState) => {
+    const status = response.enabled ? 'enabled' : 'disabled';
+    console.log(`Bluetooth is ${status}`);
+  })
+  .catch(() => {
+    console.log('Error disabling bluetooth');
+  });
+```
+
+
+## startEnabledNotifications
+
+Be notified when bluetooth status changed.
+
+`startEnabledNotifications(): Promise<void>`;
+
+### Description
+
+Function `startEnabledNotifications` enable status notifications. In order to retrieve the values, use an Event Listener with 'onEnabledChanged' as event name.
+
+``` typescript
+const eventListener = BluetoothSerial.addListener('onEnabledChanged' , (response: BluetoothState) => {
+
+    const { enabled } = response;
+    //Do something with enabled variable
+});
+```
+
+### Parameters
+
+None.
+
+### Quick Example
+
+```typescript
+BluetoothSerial
+  .startEnabledNotifications()
+  .then(() => {
+      eventListener = BluetoothSerial.addListener('onEnabledChanged', (data: BluetoothState) => {
+        console.log('Bluetooth state changed to ' + (data.enabled ? 'Enabled' : 'Disabled'));
+      });
+  })
+  .catch(() => {
+    console.log('Error starting enabled listener');
+  });
+```
+
+
+## stopEnabledNotifications
+
+Stops the propagation of value changes.
+
+`stopEnabledNotifications(): Promise<void>`;
+
+### Description
+
+Function `stopEnabledNotifications` disable bluetooth state notifications. Additionally, the event listener has to be removed.
+
+```typescript
+eventListener.remove();
+```
+
+### Parameters
+
+None.
+
+### Quick Example
+
+```typescript
+BluetoothSerial
+  .stopEnabledNotifications()
+  .then(() => {
+      eventListener.remove();
+  })
+  .catch(() => {
+    console.log('Error disabling listener for device');
+  });
+```
+
+
 ## scan
 
 Discover devices visible and close to the device
 
-  `scan(): Promise<BluetoothScanResult>;`
+`scan(): Promise<BluetoothScanResult>;`
 
 ### Description
 
@@ -183,7 +273,7 @@ BluetoothSerial
 
 Connect to a Bluetooth device.
 
-  `connect(options: BluetoothConnectOptions): Promise<void>`;
+`connect(options: BluetoothConnectOptions): Promise<void>`;
 
 ### Description
 
@@ -215,7 +305,7 @@ BluetoothSerial
 
 Connect insecurely to a Bluetooth device.
 
-  `connectInsecure(options: BluetoothConnectOptions): Promise<void>`;
+`connectInsecure(options: BluetoothConnectOptions): Promise<void>`;
 
 ### Description
 
@@ -248,7 +338,7 @@ BluetoothSerial
 
 Disconnect a Bluetooth device.
 
-  `disconnect(options: BluetoothConnectOptions): Promise<void>`;
+`disconnect(options: BluetoothConnectOptions): Promise<void>`;
 
 ### Description
 
@@ -282,7 +372,7 @@ BluetoothSerial
 
 Reports the connection status.
 
-  `isConnected(options: BluetoothConnectOptions): Promise<BluetoothConnectResult>`;
+`isConnected(options: BluetoothConnectOptions): Promise<BluetoothConnectResult>`;
 
 ### Description
 
@@ -315,7 +405,7 @@ BluetoothSerial
 
 Reads data from the buffer.
 
-  `read(options: BluetoothReadOptions): Promise<BluetoothDataResult>`;
+`read(options: BluetoothReadOptions): Promise<BluetoothReadResult>`;
 
 ### Description
 
@@ -332,7 +422,7 @@ BluetoothSerial
   .read({
     address: '00:11:22:33:44:55',
   })
-  .then((result: BluetoothDataResult) => {
+  .then((result: BluetoothReadResult) => {
     console.log(result.data);
   })
   .catch(() => {
@@ -344,7 +434,7 @@ BluetoothSerial
 
 Reads data from the buffer until it reaches a delimiter.
 
-  `readUntil(options: BluetoothReadUntilOptions): Promise<BluetoothDataResult>`;
+`readUntil(options: BluetoothReadUntilOptions): Promise<BluetoothReadResult>`;
 
 ### Description
 
@@ -363,7 +453,7 @@ BluetoothSerial
     address: '00:11:22:33:44:55',
     delimiter: '\n',
   })
-  .then((result: BluetoothDataResult) => {
+  .then((result: BluetoothReadResult) => {
     console.log(result.data);
   })
   .catch(() => {
@@ -371,22 +461,21 @@ BluetoothSerial
   });
 ```
 
-## enableNotifications
+## startNotifications
 
 Enable and be notified when any data is received.
 
-  `enableNotifications(options: BluetoothEnableNotificationsOptions): Promise<BluetoothEnableNotificationsResult>`;
+`startNotifications(options: BluetoothEnableNotificationsOptions): Promise<void>`;
 
 ### Description
 
-Function `enableNotifications` enable notifications. The success callback will return an event name. In order to retrieve the values, one has to use an Event Listener with the returned event name.
+Function `startNotifications` enable notifications. In order to retrieve the values, use an Event Listener with 'onRead' as event name.
 
 ``` typescript
-const listener = BluetoothSerial.addListener( eventName , (data: BluetoothDataResult) => {
+const eventListener = BluetoothSerial.addListener('onRead' , (response: BluetoothReadResult) => {
 
-    const { value } = data.data;
-    //Do something with the data
-q
+    const { value } = response;
+    //Do something with the value
 });
 ```
 
@@ -399,32 +488,32 @@ q
 
 ```typescript
 BluetoothSerial
-  .enableNotifications({
+  .startNotifications({
     address: '00:11:22:33:44:55',
     delimiter: '\n',
   })
   .then((result: BluetoothEnableNotificationsResult) => {
-    event = BluetoothSerial.addListener(result.eventName, (data: BluetoothDataResult) => {
-        console.log(data.data);
-      });
+      eventListener = BluetoothSerial.addListener('onRead', (data: BluetoothReadResult) => {
+      console.log("Received value: " + data.value);
+    });
   })
   .catch(() => {
     console.log('Error enabling listener for device');
   });
 ```
 
-## disableNotifications
+## stopNotifications
 
 Stops the propagation of value changes.
 
-  `disableNotifications(options: BluetoothDisableNotificationsOptions): Promise<void>`;
+`stopNotifications(options: BluetoothDisableNotificationsOptions): Promise<void>`;
 
 ### Description
 
-Function `disableNotifications` disable notifications. Additionally, the event listener has to be removed.
+Function `stopNotifications` disable notifications. Additionally, the event listener has to be removed.
 
 ```typescript
-listener.remove();
+eventListener.remove();
 ```
 
 ### Parameters
@@ -435,30 +524,22 @@ listener.remove();
 
 ```typescript
 BluetoothSerial
-  .disableNotifications({
+  .stopNotifications({
     address: '00:11:22:33:44:55',
   })
   .then(() => {
-    event.remove();
+    eventListener.remove();
   })
   .catch(() => {
     console.log('Error disabling listener for device');
   });
 ```
 
-## enableRawNotifications
-
-  Under development.
-
-## disableRawNotifications
-
-  Under development.
-
 ## write
 
 Write data to the buffer.
 
-  `write(options: BluetoothWriteOptions): Promise<void>`;
+`write(options: BluetoothWriteOptions): Promise<void>`;
 
 ### Description
 
@@ -473,14 +554,14 @@ Function `write` writes data to the buffer.
 
 ```typescript
 BluetoothSerial
-  .write({
-    address: '00:11:22:33:44:55',
-    value: 'Hello world',
-  })
-  .then(() => {
-    console.log('Value sent to device');
-  })
-  .catch(() => {
-    console.log('Error writing data to device');
-  });
+    .write({
+        address: '00:11:22:33:44:55',
+        value: 'Hello world',
+    })
+    .then(() => {
+        console.log('Value sent to device');
+    })
+    .catch(() => {
+        console.log('Error writing data to device');
+    });
 ```
